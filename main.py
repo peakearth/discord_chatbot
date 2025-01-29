@@ -1,32 +1,30 @@
 import discord
 from discord.ext import commands
-import os
 
-async def load_cogs(bot):
-    cogs_dir = os.path.join('discord_chatbot', 'cogs')
-    for filename in os.listdir(cogs_dir):
-        if filename.endswith('.py'):
-            cog_name = filename[:-3]  # `.py` 확장자 제거
-            try:
-                await bot.load_extension(f'cogs.{cog_name}')
-                print(f'✅ Cog 로드 완료: {cog_name}')
-            except Exception as e:
-                print(f'⚠️ {cog_name} 로드 실패: {e}')
+# 봇 객체 생성
+intents = discord.Intents.default()
+intents.message_content = True  # 메시지 내용을 읽을 수 있는 권한 추가
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-async def main():
-    prefix = '!'
-    intents = discord.Intents.all()
-    bot = commands.Bot(command_prefix=prefix, intents=intents)
+# Cog 로드 함수
+def load_cogs():
+    try:
+        bot.load_extension("cogs.example")  # example.py 파일 로드
+        print("✅ example.py 로드 성공")
+    except Exception as e:
+        print(f"⚠️ Cog 로드 실패: {e}")
 
-    # Cog 로드
-    await load_cogs(bot)
+# 봇 준비 완료 이벤트
+@bot.event
+async def on_ready():
+    print(f"봇이 로그인되었습니다: {bot.user}")
+    load_cogs()  # 봇이 준비되면 Cog 로드
 
-    # 토큰 읽기
+# 봇 실행
+def main():
     with open('discord_chatbot/token.txt', 'r') as f:
-        token = f.read().strip()
+        token = f.read().strip()  # 토큰 파일에서 읽어옴
+    bot.run(token)  # 봇 실행
 
-    await bot.start(token)
-
-# 비동기 실행을 위해 아래와 같이 변경
-import asyncio
-asyncio.run(main())
+if __name__ == "__main__":
+    main()

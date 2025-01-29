@@ -1,129 +1,81 @@
 import discord
 from discord.ext import commands
-import yt_dlp as youtube_dl
-import asyncio
+import yt_dlp
 
-class Music(commands.Cog):
+class MusicModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.queue = []  # 음악 대기열
-        self.currently_playing = None  # 현재 재생 중인 음악
-        
-    @commands.command(name="상태")
-    async def status(self, ctx):
-        vc = ctx.voice_client
-        if vc is None:
-            await ctx.send("❌ 봇이 음성 채널에 접속해 있지 않습니다.")
-        else:
-            await ctx.send(f"✅ 봇이 {vc.channel.name} 채널에 접속해 있습니다.")
-    
-    # 🎧 사용자가 음성 채널에 접속해야만 실행 가능
-    async def ensure_voice(self, ctx):
-        if ctx.author.voice is None:
-            await ctx.send("🎧 먼저 음성 채널에 접속해주세요!")
-            return False
-        return True
 
-    # 🎶 YouTube에서 음악 검색 후 오디오 URL 가져오기
-    def search_youtube(self, query):
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'quiet': True,
-            'default_search': 'ytsearch',
-            'noplaylist': True,
-        }
+    async def play_music(self, ctx, url):
+        try:
+            # 음성 채널 연결
+            vc = ctx.voice_client
 
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            try:
-                result = ydl.extract_info(f"ytsearch:{query}", download=False)
-                if 'entries' in result and result['entries']:
-                    url = result['entries'][0]['url']
-                    print(f"🎵 [디버그] 검색된 URL: {url}")  # ✅ 디버깅 메시지 추가
-                    return url
+            # 봇이 음성 채널에 없으면 자동 연결
+            if not vc:
+                if ctx.author.voice:
+                    vc = await ctx.author.voice.channel.connect()
                 else:
-                    print("❌ [디버그] YouTube 검색 결과 없음")
-                    return None
-            except Exception as e:
-                print(f"❌ [디버그] YouTube 검색 오류: {e}")
-                return None
+                    await ctx.send("❌ 먼저 음성 채널에 접속해주세요!")
+                    return
 
-    # 🎵 음악 재생 함수
-    async def play_next(self, ctx):
-        if self.queue:
-            url = self.queue.pop(0)
-            self.currently_playing = url
-
-            ffmpeg_options = {
-            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin',
-            'options': '-vn -loglevel panic',
+            # YouTube 링크에서 오디오 URL 추출
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'quiet': True,
+                'extractaudio': True,
+                'noplaylist': True,
+                'default_search': 'ytsearch',
             }
 
-            vc = ctx.voice_client
-            if vc is None:
-                print("❌ [디버그] 봇이 음성 채널에 연결되지 않음")
-                return
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                if 'entries' in info:
+                    info = info['entries'][0]  # 첫 번째 검색 결과 사용
+                url2 = info['url']
+                title = info['title']
 
-            vc.stop()
-            print("🎧 [디버그] 음악 재생 시작!")  # ✅ 디버깅 메시지 추가
-            vc.play(discord.FFmpegPCMAudio(url, **ffmpeg_options), after=lambda e: self.bot.loop.create_task(self.play_next(ctx)))
-        else:
-            self.currently_playing = None
-            await ctx.voice_client.disconnect()
+            # FFmpeg로 음악 재생
+            ffmpeg_options = {
+                'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -loglevel quiet',
+                'options': '-vn -filter:a "volume=0.9,aformat=sample_fmts=s16:sample_rates=48000:channel_layouts=stereo"',
+            }
 
-    # 🎼 !재생 [노래 제목]
+            # play()는 비동기 함수가 아니므로 await을 사용할 필요가 없음
+            vc.play(discord.FFmpegPCMAudio(url2, **ffmpeg_options), after=lambda e: print('음악 재생 종료됨', e))
+
+            await ctx.send(f"🎵 `{title}`을(를) 재생합니다! ▶️")
+
+        except Exception as e:
+            await ctx.send(f"❌ 음악을 재생할 수 없습니다: {str(e)}")
+            print(f"❌ [디버그] 오류 발생: {e}")
+
     @commands.command(name="재생")
     async def play(self, ctx, *, query):
-        if not await self.ensure_voice(ctx):
-            return
+        await self.play_music(ctx, query)
 
-        url = self.search_youtube(query)
-        if url is None:
-            await ctx.send(f"❌ `{query}` 검색 결과가 없습니다.")
-            return
+    @commands.command(name="볼륨")
+    async def set_volume(self, ctx, volume: int):
+        if ctx.voice_client is None or not ctx.voice_client.is_playing():
+            return await ctx.send("❌ 현재 재생 중인 음악이 없습니다.")
+        
+        ctx.voice_client.source = discord.PCMVolumeTransformer(ctx.voice_client.source)
+        ctx.voice_client.source.volume = volume / 100
+        await ctx.send(f"🔊 볼륨을 {volume}%로 설정했습니다!")
 
-        if ctx.voice_client is None:
-            vc = await ctx.author.voice.channel.connect()
-        else:
-            vc = ctx.voice_client
+    @commands.command(name="핑")
+    async def ping(self, ctx):
+        latency = round(ctx.bot.latency * 1000)  # 밀리초 변환
+        await ctx.send(f"🏓 현재 핑: {latency}ms")
 
-        self.queue.append(url)
-
-        if self.currently_playing is None:
-            await self.play_next(ctx)
-
-        await ctx.send(f"🎵 `{query}`을(를) 재생합니다! ▶️")
-
-    # ⏸️ !일시정지
-    @commands.command(name="일시정지")
-    async def pause(self, ctx):
-        if ctx.voice_client and ctx.voice_client.is_playing():
-            ctx.voice_client.pause()
-            await ctx.send("⏸️ 음악을 일시 정지했습니다.")
-    
-    # ▶️ !다시재생
-    @commands.command(name="다시재생")
-    async def resume(self, ctx):
-        if ctx.voice_client and ctx.voice_client.is_paused():
-            ctx.voice_client.resume()
-            await ctx.send("▶️ 음악을 다시 재생합니다.")
-
-    # ⏹️ !정지
-    @commands.command(name="정지")
-    async def stop(self, ctx):
+    @commands.command(name="나가")
+    async def leave(self, ctx):
         if ctx.voice_client:
-            self.queue.clear()
-            ctx.voice_client.stop()
             await ctx.voice_client.disconnect()
-            await ctx.send("⏹️ 음악을 정지하고 음성 채널에서 나갑니다.")
+            await ctx.send("👋 봇이 음성 채널에서 나갔습니다!")
+        else:
+            await ctx.send("❌ 봇이 현재 음성 채널에 없습니다.")
 
-    # ⏭️ !스킵
-    @commands.command(name="스킵")
-    async def skip(self, ctx):
-        if ctx.voice_client and ctx.voice_client.is_playing():
-            ctx.voice_client.stop()
-            await self.play_next(ctx)
-            await ctx.send("⏩ 다음 음악을 재생합니다.")
-
-# ✅ 봇에 Cog 등록
+# Cog 로드 함수
 async def setup(bot):
-    await bot.add_cog(Music(bot))
+    await bot.add_cog(MusicModule(bot))  # MusicModule을 봇에 추가
