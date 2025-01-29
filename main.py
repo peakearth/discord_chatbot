@@ -2,26 +2,32 @@ import discord
 from discord.ext import commands
 import os
 
-def main():
+async def load_cogs(bot):
+    cogs_dir = os.path.join('discord_chatbot', 'cogs')
+    for filename in os.listdir(cogs_dir):
+        if filename.endswith('.py'):
+            cog_name = filename[:-3]  # `.py` 확장자 제거
+            try:
+                await bot.load_extension(f'cogs.{cog_name}')
+                print(f'✅ Cog 로드 완료: {cog_name}')
+            except Exception as e:
+                print(f'⚠️ {cog_name} 로드 실패: {e}')
+
+async def main():
     prefix = '!'
-    intents = discord.Intents.all()  # 봇이 멤버의 정보, 리스트를 불러 옴
+    intents = discord.Intents.all()
     
-    # command_prefix = 접두사의 의미 (!를 등록하는데 더 초점을 둔다)
-    client = commands.Bot(command_prefix=prefix, intents=intents)
-    
-    # Main 함수에서 모듈화를 위한 Add_on Code
-    for filename in os.listdir('discord_chatbot/cogs'):
-        filename = filename.replace('.py', '')
-        client.load_extension(f'cogs.{filename}')
-    
-    # 토큰 읽어오기
+    bot = commands.Bot(command_prefix=prefix, intents=intents)
+
+    # Cog 로드
+    await load_cogs(bot)
+
+    # 토큰 읽기
     with open('discord_chatbot/token.txt', 'r') as f:
-        token = f.read()
-        
-    # 생성된 Bot 객체에 토큰을 넣어서 생성
-    client.run(token)
-    
-if __name__ == '__main__':
-    main()
+        token = f.read().strip()
 
+    await bot.start(token)
 
+# 비동기 실행을 위해 아래와 같이 변경
+import asyncio
+asyncio.run(main())

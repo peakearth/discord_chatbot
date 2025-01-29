@@ -1,32 +1,66 @@
 from discord.ext import commands
-from datetime import *
+from datetime import datetime
+
+# import requests
+# from bs4 import beautifulSoup
+# from random import choice
 
 class Example(commands.Cog):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         
+    # 구현완료 + IN-OPERATION PART
     @commands.Cog.listener()
     async def on_ready(self):
-        print('Example Cog is Ready')
-    
+        print('✅ Example Cog is Ready')
+
     @commands.command(name = "ping")
     async def _ping(self, ctx):
-        await ctx.send('pong!')
-        
+        await ctx.send('🏓 Pong!')
+
     @commands.command(name = "이름")
     async def _이름(self, ctx):
         await ctx.send(f"명령어를 입력하신 분의 이름은 {ctx.author.name} 입니다.")
-            
+
     @commands.command(name = "날짜")
     async def _날짜(self, ctx):
         now = datetime.now()
-        await ctx.send(f"오늘은 {now.year}년 {now.month}월 {now.day}일 입니다.")
-        await ctx.send("--- 두 줄 문장을 한번에 보내는게 되는지 테스트 중입니다. --- ")
+        await ctx.send(f"📅 오늘은 {now.year}년 {now.month}월 {now.day}일 입니다.")
         
     @commands.command(name = "시간")
     async def _시간(self, ctx):
         now = datetime.now()
-        await ctx.send(f"현재 시간은 {now.hour}시 {now.minute}분 {now.second}초 입니다.")
+        await ctx.send(f"⏰ 현재 시간은 {now.hour}시 {now.minute}분 {now.second}초 입니다.")
         
-def setup(client):
-    client.add_cog(Example(client))
+    # FOR TEST PART
+    # 출력  안되는 문제 발생 = need more dev.
+    @commands.command(name="동훈")
+    async def _남은날짜(self, ctx):
+        today = datetime.today().date()
+
+        target_dates = {
+            "필승! 동훈이의 입대일까지 ": datetime(2025, 8, 19).date(),
+            "필승! 동훈이의 전역일까지 ": datetime(2027, 2, 18).date()
+        }
+
+        response = "📆 남은 날짜 계산 결과:\n"
+        for name, target_date in target_dates.items():
+            remaining_days = (target_date - today).days
+            response += f"{name}까지 {remaining_days}일 남았습니다.\n"
+
+        await ctx.send(response)
+    
+    # NEED DEVELOP PART
+    # @commands.command(name = "날씨")
+    # async def _날씨(self, ctx):
+    #     url = ""
+    #     raw = requests.get(url)
+    #     soup = beautifulSoup(raw.text, "html_parser")
+    #     box = soup.find(div, {'class' : 'today_area_mainTabContent'})
+    #     temp = box.find_all('span', {'class' : 'todaytemp'})
+    #     temps = box.find_all('span', {'class' : 'num'})
+    #     await ctx.send(f'오늘 부산의 온도는 {temp[0].text}도 입니다. \n 최저 : {temps[0].text}도 / 최고 : {temps[1].text}도')
+
+# ✅ setup 함수에서 bot을 받아오도록 수정
+async def setup(bot):
+    await bot.add_cog(Example(bot))
