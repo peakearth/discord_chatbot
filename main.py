@@ -16,7 +16,6 @@ async def load_cogs(bot):
 async def main():
     prefix = '!'
     intents = discord.Intents.all()
-    
     bot = commands.Bot(command_prefix=prefix, intents=intents)
 
     # Cog 로드

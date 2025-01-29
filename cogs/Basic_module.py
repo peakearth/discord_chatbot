@@ -66,17 +66,6 @@ class Example(commands.Cog):
             response += f"{name}까지 {remaining_days}일 남았습니다.\n"
 
         await ctx.send(response)
-    
-    # NEED DEVELOP PART
-    # @commands.command(name = "날씨")
-    # async def _날씨(self, ctx):
-    #     url = ""
-    #     raw = requests.get(url)
-    #     soup = beautifulSoup(raw.text, "html_parser")
-    #     box = soup.find(div, {'class' : 'today_area_mainTabContent'})
-    #     temp = box.find_all('span', {'class' : 'todaytemp'})
-    #     temps = box.find_all('span', {'class' : 'num'})
-    #     await ctx.send(f'오늘 부산의 온도는 {temp[0].text}도 입니다. \n 최저 : {temps[0].text}도 / 최고 : {temps[1].text}도')
 
 # ✅ setup 함수에서 bot을 받아오도록 수정
 async def setup(bot):
