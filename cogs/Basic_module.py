@@ -26,7 +26,38 @@ class Example(commands.Cog):
     async def _시간(self, ctx):
         now = datetime.now()
         await ctx.send(f"⏰ 현재 시간은 {now.hour}시 {now.minute}분 {now.second}초 입니다.")
+        
+    @commands.command(name="이동훈")
+    async def _이동훈(self, ctx):
+        today = datetime.today().date()
 
+        target_dates = {
+            "필승! 이동훈의 군복무 시작일": datetime(2025, 8, 19).date(),
+            "필승! 이동훈의 민간인 복귀일": datetime(2027, 2, 18).date()
+        }
+
+        response = "📆 남은 날짜 계산 결과:\n"
+        for name, target_date in target_dates.items():
+            remaining_days = (target_date - today).days
+            response += f"{name}까지 {remaining_days}일 남았습니다.\n"
+
+        await ctx.send(response)
+    
+    @commands.command(name="김도훈")
+    async def _김도훈(self, ctx):
+        today = datetime.today().date()
+
+        target_dates = {
+            "필승! 김도훈의 민간인 복귀일": datetime(2027, 2, 18).date()
+        }
+
+        response = "📆 남은 날짜 계산 결과:\n"
+        for name, target_date in target_dates.items():
+            remaining_days = (target_date - today).days
+            response += f"{name}까지 {remaining_days}일 남았습니다.\n"
+
+        await ctx.send(response)
+        
 # 비동기적으로 Cog 추가
 async def setup(bot):
     await bot.add_cog(Example(bot))  # await 사용
