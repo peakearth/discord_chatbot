@@ -10,7 +10,7 @@ def main():
     client = commands.Bot(command_prefix=prefix, intents=intents)
     
     # Main 함수에서 모듈화를 위한 Add_on Code
-    for filename in os.listdir('./cogs'):
+    for filename in os.listdir('discord_chatbot/cogs'):
         filename = filename.replace('.py', '')
         client.load_extension(f'cogs.{filename}')
     
