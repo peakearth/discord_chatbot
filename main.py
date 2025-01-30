@@ -20,6 +20,12 @@ async def load_cogs():
     except Exception as e:
         print(f"⚠️ Cog 로드 실패: {e}")
 
+    try:
+        await bot.load_extension("cogs.random_module")  # random_module.py 파일 로드
+        print("✅ random_module.py 로드 성공")
+    except Exception as e:
+        print(f"⚠️ Cog 로드 실패: {e}")
+
 # 봇 준비 완료 이벤트
 @bot.event
 async def on_ready():
