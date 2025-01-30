@@ -10,7 +10,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def load_cogs():
     try:
         await bot.load_extension("cogs.Basic_module")  # example.py 파일 로드
-        print("✅ example.py 로드 성공")
+        print("✅ basic_module.py 로드 성공")
     except Exception as e:
         print(f"⚠️ Cog 로드 실패: {e}")
 

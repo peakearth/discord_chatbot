@@ -1,7 +1,7 @@
 from discord.ext import commands
 from datetime import datetime
 
-class Example(commands.Cog):
+class Basic(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
@@ -60,4 +60,4 @@ class Example(commands.Cog):
         
 # 비동기적으로 Cog 추가
 async def setup(bot):
-    await bot.add_cog(Example(bot))  # await 사용
+    await bot.add_cog(Basic(bot))  # await 사용
