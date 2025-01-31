@@ -5,22 +5,23 @@ import yt_dlp
 class MusicModule(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.queues = {}  # 서버별 큐를 저장할 딕셔너리
+        self.queues = {}  # 서버별 큐 저장
+        self.loop_modes = {}  # {guild_id: "none"/"single"/"queue"}
+        self.current_tracks = {}  # {guild_id: 현재 재생 곡 정보}
+        
         self.ffmpeg_options = {
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': '-vn -filter:a "volume=0.9"'
         }
-        self.loop_modes = {}  # {guild_id: "none"/"single"/"queue"}
-        self.current_tracks = {}  # {guild_id: 현재 재생 정보}
 
     def get_queue(self, guild_id):
-        """서버별 음악 큐 생성/반환"""
+        """서버별 음악 큐 반환"""
         if guild_id not in self.queues:
             self.queues[guild_id] = []
         return self.queues[guild_id]
 
     async def connect_voice(self, ctx):
-        """음성 채널 연결 함수"""
+        """음성 채널 연결"""
         if not ctx.author.voice:
             raise commands.CommandError("❌ 먼저 음성 채널에 접속해주세요!")
         
@@ -31,50 +32,54 @@ class MusicModule(commands.Cog):
         return await ctx.author.voice.channel.connect()
 
     async def play_music(self, ctx, song_info):
-        """음악 재생 핵심 로직"""
+        """음악 재생"""
         try:
             vc = ctx.voice_client or await self.connect_voice(ctx)
-            
+
+            # 현재 재생 곡 저장
+            self.current_tracks[ctx.guild.id] = song_info  
+
             vc.play(
                 discord.FFmpegPCMAudio(song_info['url'], **self.ffmpeg_options),
                 after=lambda e: self.bot.loop.create_task(self.play_next(ctx.guild))
             )
             await ctx.send(f"🎵 **{song_info['title']}** 재생 시작!")
-            
+
         except Exception as e:
             await ctx.send(f"❌ 재생 오류: {str(e)}")
             print(f"[DEBUG] Play Error: {e}")
 
     async def play_next(self, guild):
+        """큐에서 다음 곡 재생"""
         guild_id = guild.id
         queue = self.get_queue(guild_id)
-        
-        # 반복 모드 체크
         loop_mode = self.loop_modes.get(guild_id, "none")
-        
+
         if loop_mode == "single" and guild_id in self.current_tracks:
             # 현재 곡 다시 재생
-            await self._play_current_track(guild)
+            track = self.current_tracks[guild_id]
         elif queue:
-            next_track = queue.pop(0)
-            await self._play_track(guild, next_track)
+            # 큐에서 다음 곡 가져오기
+            track = queue.pop(0)
+            self.current_tracks[guild_id] = track  
             if loop_mode == "queue":
-                queue.append(next_track)  # 큐 반복 시 다시 추가
+                queue.append(track)  # 큐 반복 모드면 다시 추가
         else:
+            # 큐가 비었으면 종료
             await self._cleanup(guild)
-        
-        """다음 곡 자동 재생"""
-        
-        queue = self.get_queue(guild.id)
-        if queue:
-            next_song = queue.pop(0)
-            vc = guild.voice_client
-            await self.play_music(await self.bot.get_context(vc.channel.last_message), next_song)
+            return
+
+        vc = guild.voice_client
+        if vc and vc.is_connected():
+            vc.play(
+                discord.FFmpegPCMAudio(track['url'], **self.ffmpeg_options),
+                after=lambda e: self.bot.loop.create_task(self.play_next(guild))
+            )
 
     @commands.command(name="재생")
     @commands.guild_only()
     async def play(self, ctx, *, query):
-        """음악 재생 명령어"""
+        """음악 재생"""
         try:
             # 유튜브 정보 추출
             ydl_opts = {
@@ -125,7 +130,7 @@ class MusicModule(commands.Cog):
     @commands.command(name="정지")
     @commands.guild_only()
     async def stop(self, ctx):
-        """재생 완전 정지"""
+        """재생 정지 및 큐 초기화"""
         if ctx.voice_client:
             self.queues.pop(ctx.guild.id, None)
             await ctx.voice_client.disconnect()
@@ -135,7 +140,7 @@ class MusicModule(commands.Cog):
     @commands.guild_only()
     async def skip(self, ctx):
         """현재 곡 스킵"""
-        if ctx.voice_client:
+        if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.stop()
             await ctx.send("⏩ 현재 곡을 스킵합니다.")
 
@@ -153,31 +158,27 @@ class MusicModule(commands.Cog):
         
         await ctx.send(embed=embed)
 
+    @commands.command(name="반복재생")
+    async def loop(self, ctx, mode: str):
+        """반복 재생 모드 설정 (none/single/queue)"""
+        if mode not in ["none", "single", "queue"]:
+            return await ctx.send("❌ 잘못된 반복 모드입니다! (가능한 값: none, single, queue)")
+
+        self.loop_modes[ctx.guild.id] = mode
+        await ctx.send(f"🔁 반복 재생 모드가 `{mode}`(으)로 설정되었습니다.")
+
     @commands.Cog.listener()
     async def on_voice_state_update(self, member, before, after):
-        """음성 채널 상태 변화 감지"""
-        # 봇이 강제로 추방당한 경우
+        """봇이 강제로 음성 채널에서 추방되면 큐 초기화"""
         if member == self.bot.user and not after.channel:
             self.queues.pop(member.guild.id, None)
-    
-    @commands.command(name = "반복재생")
-    async def play_next(self, guild):
-        guild_id = guild.id
-        queue = self.get_queue(guild_id)
-        
-        # 반복 모드 체크
-        loop_mode = self.loop_modes.get(guild_id, "none")
-        
-        if loop_mode == "single" and guild_id in self.current_tracks:
-            # 현재 곡 다시 재생
-            await self._play_current_track(guild)
-        elif queue:
-            next_track = queue.pop(0)
-            await self._play_track(guild, next_track)
-            if loop_mode == "queue":
-                queue.append(next_track)  # 큐 반복 시 다시 추가
-        else:
-            await self._cleanup(guild)
+
+    async def _cleanup(self, guild):
+        """음성 채널에서 나가고 큐 초기화"""
+        if guild.voice_client:
+            await guild.voice_client.disconnect()
+        self.queues.pop(guild.id, None)
+        self.current_tracks.pop(guild.id, None)
 
 async def setup(bot):
     await bot.add_cog(MusicModule(bot))
