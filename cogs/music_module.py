@@ -160,6 +160,7 @@ class MusicModule(commands.Cog):
         if member == self.bot.user and not after.channel:
             self.queues.pop(member.guild.id, None)
     
+    @commands.command(name = "반복재생")
     async def play_next(self, guild):
         guild_id = guild.id
         queue = self.get_queue(guild_id)

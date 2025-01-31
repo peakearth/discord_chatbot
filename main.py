@@ -10,21 +10,21 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 async def load_cogs():
     try:
         await bot.load_extension("cogs.Basic_module")  # example.py 파일 로드
-        print("✅ basic_module.py 로드 성공")
+        print("✅ BASIC MODULE 로드 성공")
     except Exception as e:
-        print(f"⚠️ Cog 로드 실패: {e}")
+        print(f"⚠️ BASIC MODULE 로드 실패: {e}")
 
     try:
         await bot.load_extension("cogs.music_module")  # music_module.py 파일 로드
-        print("✅ music_module.py 로드 성공")
+        print("✅ MUSIC MODULE 로드 성공")
     except Exception as e:
-        print(f"⚠️ Cog 로드 실패: {e}")
+        print(f"⚠️ MUSIC MODULE 로드 실패: {e}")
 
     try:
         await bot.load_extension("cogs.random_module")  # random_module.py 파일 로드
-        print("✅ random_module.py 로드 성공")
+        print("✅ RANDOM MODULE 로드 성공")
     except Exception as e:
-        print(f"⚠️ Cog 로드 실패: {e}")
+        print(f"⚠️ RANDOM MODULE 로드 실패: {e}")
 
 # 봇 준비 완료 이벤트
 @bot.event
