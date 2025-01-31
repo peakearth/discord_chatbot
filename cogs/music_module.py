@@ -10,6 +10,8 @@ class MusicModule(commands.Cog):
             'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
             'options': '-vn -filter:a "volume=0.9"'
         }
+        self.loop_modes = {}  # {guild_id: "none"/"single"/"queue"}
+        self.current_tracks = {}  # {guild_id: 현재 재생 정보}
 
     def get_queue(self, guild_id):
         """서버별 음악 큐 생성/반환"""
@@ -44,7 +46,25 @@ class MusicModule(commands.Cog):
             print(f"[DEBUG] Play Error: {e}")
 
     async def play_next(self, guild):
+        guild_id = guild.id
+        queue = self.get_queue(guild_id)
+        
+        # 반복 모드 체크
+        loop_mode = self.loop_modes.get(guild_id, "none")
+        
+        if loop_mode == "single" and guild_id in self.current_tracks:
+            # 현재 곡 다시 재생
+            await self._play_current_track(guild)
+        elif queue:
+            next_track = queue.pop(0)
+            await self._play_track(guild, next_track)
+            if loop_mode == "queue":
+                queue.append(next_track)  # 큐 반복 시 다시 추가
+        else:
+            await self._cleanup(guild)
+        
         """다음 곡 자동 재생"""
+        
         queue = self.get_queue(guild.id)
         if queue:
             next_song = queue.pop(0)
@@ -139,6 +159,24 @@ class MusicModule(commands.Cog):
         # 봇이 강제로 추방당한 경우
         if member == self.bot.user and not after.channel:
             self.queues.pop(member.guild.id, None)
+    
+    async def play_next(self, guild):
+        guild_id = guild.id
+        queue = self.get_queue(guild_id)
+        
+        # 반복 모드 체크
+        loop_mode = self.loop_modes.get(guild_id, "none")
+        
+        if loop_mode == "single" and guild_id in self.current_tracks:
+            # 현재 곡 다시 재생
+            await self._play_current_track(guild)
+        elif queue:
+            next_track = queue.pop(0)
+            await self._play_track(guild, next_track)
+            if loop_mode == "queue":
+                queue.append(next_track)  # 큐 반복 시 다시 추가
+        else:
+            await self._cleanup(guild)
 
 async def setup(bot):
     await bot.add_cog(MusicModule(bot))

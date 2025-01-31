@@ -16,7 +16,10 @@ class Random(commands.Cog):
         
     @commands.command(name = "복권")
     async def _복권(self, ctx):
-        pass
+        for i in range(5):
+            lotto_num = random.sample(range(1,46), 6)
+            lotto_num.sort()
+            print(f'오늘의 로또 번호 추천은 {lotto_num} 입니다.')
     
     @commands.command(name  = "밥추천")
     async def _밥추천(self, ctx):
