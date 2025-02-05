@@ -26,6 +26,12 @@ async def load_cogs():
     except Exception as e:
         print(f"⚠️ RANDOM MODULE 로드 실패: {e}")
 
+    try:
+        await bot.load_extension("cogs.weather_module")  # weather_module.py 파일 로드
+        print("✅ WEATHER MODULE 로드 성공")
+    except Exception as e:
+        print(f"⚠️ WEATHER MODULE 로드 실패: {e}")
+
 # 봇 준비 완료 이벤트
 @bot.event
 async def on_ready():
@@ -34,7 +40,7 @@ async def on_ready():
 
 # 봇 실행
 def main():
-    with open('discord_chatbot/token.txt', 'r') as f:
+    with open('discord_chatbot/key/token.txt', 'r') as f:
         token = f.read().strip()  # 토큰 파일에서 읽어옴
     bot.run(token)  # 봇 실행
 
