@@ -38,7 +38,7 @@ async def on_ready():
     print(f"✅ 봇이 로그인되었습니다: {bot.user}")
     await load_cogs()  # 비동기적으로 Cog 로드
 
-# 봇 실행
+# 봇 실행'
 def main():
     with open('discord_chatbot/key/token.txt', 'r') as f:
         token = f.read().strip()  # 토큰 파일에서 읽어옴

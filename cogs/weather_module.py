@@ -6,7 +6,7 @@ intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # OpenWeatherMap API 키
-with open('discord_chatbot/token.txt', 'r') as f:
+with open('discord_chatbot/key/weather_api.txt', 'r') as f:
     API_KEY = f.read().strip()
 
 BASE_URL = "http://api.openweathermap.org/data/2.5/weather"
