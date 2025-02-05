@@ -1,5 +1,7 @@
 from discord.ext import commands
+import json
 import random
+import discord
 
 class Random(commands.Cog):
     def __init__(self, bot):
@@ -20,15 +22,17 @@ class Random(commands.Cog):
             lotto_num = random.sample(range(1,46), 6)
             lotto_num.sort()
             await ctx.send(f'오늘의 로또 번호 추천은 {lotto_num} 입니다.')
-    
-    @commands.command(name  = "밥추천")
-    async def _밥추천(self, ctx):
-        food = list('한식', '양식', '중식', '일식', '굶어')
-        rand_food = random.random(food)
-        await ctx.send(f'오늘의 추천은 {rand_food} 입니다!')
-    
-    # @commands.command(name = "")
-    
-    
+            
+
+class Lunch(commands.Cog):
+    # 점심메뉴 추가용 봇
+    def __init__(self, bot):
+        self.bot = bot
+        
+    @commands.command(name = "밥 추천")
+    async def recommand_lunch(self, ctx, kind = None):
+        await ctx.send
+
 async def setup(bot):
     await bot.add_cog(Random(bot))
+    await bot.add_cog(Lunch(bot))
