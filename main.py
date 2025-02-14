@@ -32,6 +32,11 @@ async def load_cogs():
     except Exception as e:
         print(f"⚠️ WEATHER MODULE 로드 실패: {e}")
 
+    try:
+        await bot.load_extension("cogs.lunch_module")  # lunch_module.py 파일 로드
+        print("✅ LUNCH MODULE 로드 성공")
+    except Exception as e:
+        print(f"⚠️ LUNCH MODULE 로드 실패: {e}")
 # 봇 준비 완료 이벤트
 @bot.event
 async def on_ready():
