@@ -23,6 +23,6 @@
     <img src = "https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" />
     <img src = "https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=white" />  
     <br>
-    <img src = "https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=MySQL&logoColor=white" />
+    <img src = "https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" />
   </div>
 </html>
