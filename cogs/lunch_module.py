@@ -71,7 +71,13 @@ class LunchModule(commands.Cog):
                             cursor.execute("""
                                 INSERT INTO cafeteria_menu (location, menu_type, menu_name, price, menu_date)
                                 VALUES (?, ?, ?, ?, ?)
-                            """, (menu['location'], menu['type'], menu['name'], menu['price'], today))
+                            """, (
+                                menu.get('location', '기본 위치'),
+                                menu.get('type', '기본 타입'),
+                                menu.get('name', '기본 메뉴'),
+                                menu.get('price', 0),  # 가격이 없을 경우 0으로 설정
+                                today
+                            ))
                         
                         conn.commit()
                         conn.close()
