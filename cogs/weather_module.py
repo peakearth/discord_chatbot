@@ -11,7 +11,7 @@ class Weather(commands.Cog):
         self.API_KEY = self._load_api_key()  # API 키 로드
 
     def _load_api_key(self):
-        """텍스트 파일에서 API 키를 로드합니다."""
+        # 텍스트 파일에서 API 키를 로드.
         try:
             with open("discord_chatbot/key/weather_api.txt", "r") as f:
                 return f.read().strip()  # 파일 내용 읽기 및 공백 제거
@@ -24,7 +24,7 @@ class Weather(commands.Cog):
 
     @commands.command(name="날씨")
     async def weather(self, ctx, *, city: str):
-        """도시 이름을 입력하면 현재 날씨 정보를 알려줍니다."""
+        # 도시 이름을 입력하면 현재 날씨 정보를 알려줍니다.
         if not self.API_KEY:
             await ctx.send("❌ API 키를 로드할 수 없습니다. 관리자에게 문의하세요.")
             return
